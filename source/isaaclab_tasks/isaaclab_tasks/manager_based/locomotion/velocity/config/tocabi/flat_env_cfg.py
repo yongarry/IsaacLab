@@ -10,11 +10,10 @@ import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 from isaaclab.managers import SceneEntityCfg
 
 @configclass
-class TocabiFlatPosEnvCfg(TocabiRoughEnvCfg):
+class TocabiFlatEnvCfg(TocabiRoughEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
-        self.actions.joint_pos.pd_control = True
         # change terrain to flat
         self.scene.terrain.terrain_type = "plane"
         self.scene.terrain.terrain_generator = None
@@ -24,24 +23,7 @@ class TocabiFlatPosEnvCfg(TocabiRoughEnvCfg):
         # no terrain curriculum
         self.curriculum.terrain_levels = None
 
-@configclass
-class TocabiFlatTorqEnvCfg(TocabiRoughEnvCfg):
-    def __post_init__(self):
-        # post init of parent
-        super().__post_init__()
-        self.actions.joint_pos.pd_control = False
-
-        # change terrain to flat
-        self.scene.terrain.terrain_type = "plane"
-        self.scene.terrain.terrain_generator = None
-        # no height scan
-        self.scene.height_scanner = None
-        self.observations.policy.height_scan = None
-        # no terrain curriculum
-        self.curriculum.terrain_levels = None
-
-
-class TocabiFlatEnvCfg_PLAY(TocabiFlatPosEnvCfg):
+class TocabiFlatEnvCfg_PLAY(TocabiFlatEnvCfg):
     def __post_init__(self) -> None:
         # post init of parent
         super().__post_init__()
@@ -93,7 +75,7 @@ class TocabiMimicRewards(TocabiRewards):
         },
     )
 @configclass
-class TocabiMimicEnvCfg(TocabiFlatPosEnvCfg):
+class TocabiMimicEnvCfg(TocabiFlatEnvCfg):
     rewards: TocabiMimicRewards = TocabiMimicRewards()
 
     def __post_init__(self):

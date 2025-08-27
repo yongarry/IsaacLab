@@ -34,17 +34,7 @@ gym.register(
 
 
 gym.register(
-    id="Flat-Tocabi-P",
-    entry_point="isaaclab.envs:ManagerBasedRLEnv",
-    disable_env_checker=True,
-    kwargs={
-        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:TocabiFlatPosEnvCfg",
-        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiFlatPPORunnerCfg",
-    },
-)
-
-gym.register(
-    id="Flat-Tocabi-T",
+    id="Flat-Tocabi",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,
     kwargs={
@@ -101,5 +91,25 @@ gym.register(
     kwargs={
         "env_cfg_entry_point": f"{__name__}.amp_env_cfg:TocabiAMPFlatEnvCfg_PLAY",
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiAMPPPORunnerCfg",
+    },
+)
+
+gym.register(
+    id="Tocabi-Teacher",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.teacher_student_env_cfg:TocabiTeacherEnvCfg",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiTeacherPPORunnerCfg",
+    },
+)
+
+gym.register(
+    id="Tocabi-Student",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.teacher_student_env_cfg:TocabiStudentEnvCfg",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiDistillationStudentTeacherCfg",
     },
 )

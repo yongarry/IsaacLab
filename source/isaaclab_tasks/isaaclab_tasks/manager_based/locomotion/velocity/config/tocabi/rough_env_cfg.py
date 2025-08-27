@@ -37,8 +37,7 @@ class TocabiActionsCfg:
                            "L_Shoulder1_Joint", "L_Shoulder2_Joint", "L_Shoulder3_Joint", "L_Elbow_Joint", "L_Armlink_Joint", "L_Forearm_Joint", "L_Wrist1_Joint", "L_Wrist2_Joint",
                            "Neck_Joint", "Head_Joint",
                            "R_Shoulder1_Joint", "R_Shoulder2_Joint", "R_Shoulder3_Joint", "R_Elbow_Joint", "R_Armlink_Joint", "R_Forearm_Joint", "R_Wrist1_Joint", "R_Wrist2_Joint"],
-        pd_control=True, 
-        rescale_to_limits=True, # for torque control false, for position control true
+        pd_control=True,
 
         p_gains = [2000.0, 5000.0, 4000.0, 3700.0, 3200.0, 3200.0, 
                    2000.0, 5000.0, 4000.0, 3700.0, 3200.0, 3200.0, 
@@ -67,17 +66,6 @@ class TocabiActionsCfg:
         rand_torque_inj_range = (-0.0, 0.0),
         rand_motor_scale_range = (0.8, 1.2)
     )
-    # joint_pos = mdp.TocabiJointPositionActionCfg(
-    #     asset_name="robot",
-    #     joint_names=["L_HipYaw_Joint", "L_HipRoll_Joint", "L_HipPitch_Joint", "L_Knee_Joint", "L_AnklePitch_Joint", "L_AnkleRoll_Joint",
-    #                 "R_HipYaw_Joint", "R_HipRoll_Joint", "R_HipPitch_Joint", "R_Knee_Joint", "R_AnklePitch_Joint", "R_AnkleRoll_Joint"],
-    #     lower_joint_names=["L_HipYaw_Joint", "L_HipRoll_Joint", "L_HipPitch_Joint", "L_Knee_Joint", "L_AnklePitch_Joint", "L_AnkleRoll_Joint",
-    #                        "R_HipYaw_Joint", "R_HipRoll_Joint", "R_HipPitch_Joint", "R_Knee_Joint", "R_AnklePitch_Joint", "R_AnkleRoll_Joint"],
-    #     upper_joint_names=["Waist1_Joint", "Waist2_Joint", "Upperbody_Joint",
-    #                        "L_Shoulder1_Joint", "L_Shoulder2_Joint", "L_Shoulder3_Joint", "L_Elbow_Joint", "L_Armlink_Joint", "L_Forearm_Joint", "L_Wrist1_Joint", "L_Wrist2_Joint",
-    #                        "Neck_Joint", "Head_Joint",
-    #                        "R_Shoulder1_Joint", "R_Shoulder2_Joint", "R_Shoulder3_Joint", "R_Elbow_Joint", "R_Armlink_Joint", "R_Forearm_Joint", "R_Wrist1_Joint", "R_Wrist2_Joint"],
-    # )
 
 @configclass
 class CommandsCfg:
@@ -90,6 +78,7 @@ class CommandsCfg:
         heading_command=False,
         debug_vis=True,
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
+            # lin_vel_x=(-0., 0.), lin_vel_y=(-0., 0.), ang_vel_z=(-0., 0.)
             lin_vel_x=(-0.8, 0.8), lin_vel_y=(-0.4, 0.4), ang_vel_z=(-0.8, 0.8)
         ),
     )
@@ -100,11 +89,6 @@ class CommandsCfg:
             # phase_time=(1.0, 2.0)
             phase_time=(1.2, 1.2)
         ),
-    )
-    first_foot_step = mdp.FirstFootStepCommandCfg(
-        asset_name="robot",
-        resampling_time_range=(10.0, 10.0),
-        is_rfoot_first=1.0,
     )
 
 @configclass
@@ -119,24 +103,16 @@ class TocabiObservations(ObservationsCfg):
         base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         projected_gravity = ObsTerm(func=mdp.projected_gravity, noise=Unoise(n_min=-0.1, n_max=0.1))
-        clock_input = ObsTerm(func=mdp.clock_input, params={"command_name": "phase_time", "is_rfoot_first": "first_foot_step"})
+        clock_input = ObsTerm(func=mdp.clock_input, params={"command_name": "phase_time"})
         velocity_commands = ObsTerm(func=mdp.generated_commands, params={"command_name": "base_velocity"})
         joint_pos = ObsTerm(func=mdp.joint_pos_ordered_rel, 
                             noise=Unoise(n_min=-0.1, n_max=0.1),
                             params={"asset_cfg": SceneEntityCfg("robot", joint_names=["L_HipYaw_Joint", "L_HipRoll_Joint", "L_HipPitch_Joint", "L_Knee_Joint", "L_AnklePitch_Joint", "L_AnkleRoll_Joint",
                                                                                      "R_HipYaw_Joint", "R_HipRoll_Joint", "R_HipPitch_Joint", "R_Knee_Joint", "R_AnklePitch_Joint", "R_AnkleRoll_Joint"])})
-                                                                                    #  "Waist1_Joint", "Waist2_Joint", "Upperbody_Joint",
-                                                                                    #  "L_Shoulder1_Joint", "L_Shoulder2_Joint", "L_Shoulder3_Joint", "L_Elbow_Joint", "L_Armlink_Joint", "L_Forearm_Joint", "L_Wrist1_Joint", "L_Wrist2_Joint",
-                                                                                    #  "Neck_Joint", "Head_Joint",
-                                                                                    #  "R_Shoulder1_Joint", "R_Shoulder2_Joint", "R_Shoulder3_Joint", "R_Elbow_Joint", "R_Armlink_Joint", "R_Forearm_Joint", "R_Wrist1_Joint", "R_Wrist2_Joint"])})
         joint_vel = ObsTerm(func=mdp.joint_vel_ordered_rel, 
                             noise=Unoise(n_min=-0.1, n_max=0.1),
                             params={"asset_cfg": SceneEntityCfg("robot", joint_names=["L_HipYaw_Joint", "L_HipRoll_Joint", "L_HipPitch_Joint", "L_Knee_Joint", "L_AnklePitch_Joint", "L_AnkleRoll_Joint",
                                                                                      "R_HipYaw_Joint", "R_HipRoll_Joint", "R_HipPitch_Joint", "R_Knee_Joint", "R_AnklePitch_Joint", "R_AnkleRoll_Joint"])})
-                                                                                    #  "Waist1_Joint", "Waist2_Joint", "Upperbody_Joint",
-                                                                                    #  "L_Shoulder1_Joint", "L_Shoulder2_Joint", "L_Shoulder3_Joint", "L_Elbow_Joint", "L_Armlink_Joint", "L_Forearm_Joint", "L_Wrist1_Joint", "L_Wrist2_Joint",
-                                                                                    #  "Neck_Joint", "Head_Joint",
-                                                                                    #  "R_Shoulder1_Joint", "R_Shoulder2_Joint", "R_Shoulder3_Joint", "R_Elbow_Joint", "R_Armlink_Joint", "R_Forearm_Joint", "R_Wrist1_Joint", "R_Wrist2_Joint"])})
         # actions = ObsTerm(func=mdp.last_action, params={"action_name": "joint_pos"})
         actions = ObsTerm(func=mdp.last_processed_action, params={"action_name": "joint_pos"})
         height_scan = ObsTerm(
@@ -209,41 +185,42 @@ class Tocabi_WordlModelRewards:
     lin_vel_xy_tracking = RewTerm(func=mdp.track_lin_vel_xy_base_frame_exp, weight=1.0, params={"command_name": "base_velocity", "omega": 5.0})
     ang_vel_z_tracking = RewTerm(func=mdp.track_ang_vel_z_world_exp_tocabi, weight=1.0, params={"command_name": "base_velocity", "omega": 7.0})
     orientation_tracking = RewTerm(func=mdp.orientation_tracking, weight=1.0, params={"omega": 5.0})
-    base_height_tracking = RewTerm(func=mdp.base_height_tracking, weight=0.5, params={"height": 0.928, "omega": 10.0})
+    base_height_tracking = RewTerm(func=mdp.base_height_tracking, weight=0.5, params={"height": 0.92, "omega": 10.0})
     # ----------------------------------------------------------------------------------------------------------------------------------------------
     periodic_force = RewTerm(func=mdp.periodic_force, weight=1.0, params={
-                        "scale": 1300, 
+                        # "scale": 500, 
+                        "scale": 1000, 
                         "command_name": "phase_time",
-                        "is_rfoot_first": "first_foot_step",
                         "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["L_AnkleRoll_Link", "R_AnkleRoll_Link"]),
                         "left_foot": "L_AnkleRoll_Link", "right_foot": "R_AnkleRoll_Link"
     })
     # ----------------------------------------------------------------------------------------------------------------------------------------------
     feet_height_tracking = RewTerm(func=mdp.feet_height_tracking, weight=1.0, params={
-                        # "omega": 5.0, "foot_height": 0.1, "kappa": 4.0, "offset": 0.1585,
-                        "omega": 5.0, "foot_height": 0.1, "kappa": 2.0, "offset": -0.77,
-                        "command_name": "phase_time", "is_rfoot_first": "first_foot_step",
+                        "omega": 5.0, "foot_height": 0.2, "kappa": 2.0, "offset": 0.1585,
+                        # "omega": 5.0, "foot_height": 0.2, "kappa": 2.0, "offset": -0.77,
+                        "command_name": "phase_time",
                         "asset_cfg": SceneEntityCfg("robot", body_names=["L_AnkleRoll_Link", "R_AnkleRoll_Link"]),
                         "left_foot": "L_AnkleRoll_Link", "right_foot": "R_AnkleRoll_Link"})
     feet_velocity_z_tracking = RewTerm(func=mdp.feet_velocity_z_tracking, weight=0.5, params={
                         # "omega": 5.0, "foot_height": 0.1, "kappa": 4.0, "offset": 0.1585,
-                        "omega": 3.0, "foot_height": 0.1, "kappa": 2.0,
-                        "command_name": "phase_time", "is_rfoot_first": "first_foot_step",
+                        "omega": 3.0, "foot_height": 0.2, "kappa": 2.0,
+                        "command_name": "phase_time",
                         "asset_cfg": SceneEntityCfg("robot", body_names=["L_AnkleRoll_Link", "R_AnkleRoll_Link"]),
                         "left_foot": "L_AnkleRoll_Link", "right_foot": "R_AnkleRoll_Link"})
     # ----------------------------------------------------------------------------------------------------------------------------------------------
-    large_contact = RewTerm(func=mdp.large_contact_force, weight=-0.005, params={"threshold": 100.0,
+    large_contact = RewTerm(func=mdp.large_contact_force, weight=-0.01, params={"threshold": 600.0,
                         "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["L_AnkleRoll_Link", "R_AnkleRoll_Link"]),
                         "asset_cfg": SceneEntityCfg("robot")})
-    default_joint = RewTerm(func=mdp.default_joint_pos, weight=0.2, params={"omega": 2.0, 
+    default_joint = RewTerm(func=mdp.default_joint_pos, weight=0.5, params={"omega": 2.0, 
                         "asset_cfg": SceneEntityCfg("robot",
                             joint_names=["L_HipYaw_Joint", "L_HipRoll_Joint", "L_HipPitch_Joint", "L_Knee_Joint", "L_AnklePitch_Joint", "L_AnkleRoll_Joint",
                                          "R_HipYaw_Joint", "R_HipRoll_Joint", "R_HipPitch_Joint", "R_Knee_Joint", "R_AnklePitch_Joint", "R_AnkleRoll_Joint"])})
     # ----------------------------------------------------------------------------------------------------------------------------------------------
     # joint_deviation_hip = RewTerm(func=mdp.joint_deviation_l1, weight=-0.05, params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*_HipRoll_Joint"])})
-    # joint_deviation_ankle = RewTerm(func=mdp.joint_deviation_l1, weight=-0.1, params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*_AnkleRoll_Joint"])})
+    joint_deviation_ankle = RewTerm(func=mdp.joint_deviation_l1, weight=-0.1, params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*_AnkleRoll_Joint"])})
     feet_flat = RewTerm(func=mdp.flat_orientation_l2, weight=-0.1, params={"asset_cfg": SceneEntityCfg("robot", body_names=["L_AnkleRoll_Link", "R_AnkleRoll_Link"])})
 
+    
 @configclass
 class TocabiTerminations:
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
@@ -254,6 +231,10 @@ class TocabiTerminations:
     root_bad_orientation = DoneTerm(
         func=mdp.bad_orientation,
         params={"limit_angle": 0.79, "asset_cfg": SceneEntityCfg("robot")},
+    )
+    root_height_below_minimum = DoneTerm(
+        func=mdp.root_height_below_minimum,
+        params={"minimum_height": 0.6, "asset_cfg": SceneEntityCfg("robot")},
     )
     
 @configclass
@@ -267,12 +248,12 @@ class TocabiEventCfg:
             "num_buckets": 64,
         },
     )
-    randomize_rigid_body_com = EventTerm( func=mdp.randomize_rigid_body_com, mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-            "com_range": {"x": (-0.05, 0.05), "y": (-0.05, 0.05), "z": (-0.05, 0.05)},
-        },
-    )
+    # randomize_rigid_body_com = EventTerm( func=mdp.randomize_rigid_body_com, mode="startup",
+    #     params={
+    #         "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
+    #         "com_range": {"x": (-0.05, 0.05), "y": (-0.05, 0.05), "z": (-0.05, 0.05)},
+    #     },
+    # )
     randomize_rigid_body_mass = EventTerm( func=mdp.randomize_rigid_body_mass, mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
@@ -288,7 +269,7 @@ class TocabiEventCfg:
     )
     reset_joints_by_offset = EventTerm( func=mdp.reset_joints_by_offset, mode="reset",
         params={
-            "position_range": (-0.1, 0.1), "velocity_range": (0.0, 0.0),
+            "position_range": (-0.05, 0.05), "velocity_range": (0.0, 0.0),
         },
     )
     randomize_armature = EventTerm( func=mdp.randomize_joint_parameters, mode="reset",
@@ -327,6 +308,8 @@ class TocabiRoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         self.scene.robot = Tocabi_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
         if self.scene.height_scanner:
             self.scene.height_scanner.prim_path = "{ENV_REGEX_NS}/Robot/Pelvis_Link"
+        if self.scene.terrain.terrain_generator is not None:
+            self.scene.terrain.terrain_generator = ROUGH_TERRAINS_CUSTOMCFG
         
         # Randomization
         # self.events.reset_robot_joints.params["position_range"] = (1.0, 1.0)

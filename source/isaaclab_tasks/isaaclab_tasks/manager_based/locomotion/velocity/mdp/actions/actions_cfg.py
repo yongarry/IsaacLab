@@ -24,15 +24,6 @@ class TocabiActionCfg(ActionTermCfg):
     scale: float | dict[str, float] = 1.0
     """Scale factor for the action (float or dict of regex expressions). Defaults to 1.0."""
 
-    rescale_to_limits: bool = True
-    """Whether to rescale the action to the joint limits. Defaults to True.
-
-    If True, the input actions are rescaled to the joint limits, i.e., the action value in
-    the range [-1, 1] corresponds to the joint lower and upper limits respectively.
-
-    Note:
-        This operation is performed after applying the scale factor.
-    """
 
     pd_control: bool = True
     """Whether to use PD control. Defaults to True."""
@@ -51,7 +42,7 @@ class TocabiActionCfg(ActionTermCfg):
     rand_torque_inj_range: tuple[float, float] = (0.0, 0.0)
     """Range for the random torque injection. Defaults to (0.0, 0.0)."""
 
-    rand_motor_scale_range: tuple[float, float] = (0.8, 1.2)
+    rand_motor_scale_range: tuple[float, float] = (1.0, 1.0)
     """Range for the random motor scale. Defaults to (0.8, 1.2)."""
 
 @configclass

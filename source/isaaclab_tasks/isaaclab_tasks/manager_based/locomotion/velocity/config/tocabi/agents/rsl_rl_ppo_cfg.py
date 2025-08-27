@@ -7,10 +7,15 @@ from isaaclab.utils import configclass
 
 from isaaclab_rl.rsl_rl import (
     RslRlOnPolicyRunnerCfg, 
-    RslRlPpoActorCriticCfg, 
+    RslRlPpoActorCriticCfg,
+    RslRlDistillationStudentTeacherCfg,
     RslRlPpoActorCriticSpectralNormCfg,
     RslRlPpoActorCriticRecurrentCfg,
     RslRlPpoAlgorithmCfg, 
+    RslRlAMPAlgorithmCfg,
+    RslRlDistillationAlgorithmCfg,
+    RslRlAMPConfig,
+    RslRlDiscriminatorCfg,
     RslRlLcpCfg, 
     RslRlSymmetryCfg, 
     RslRlBoundLossCfg
@@ -41,7 +46,7 @@ class TocabiRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         clip_param=0.2,
         entropy_coef=0.001,
         num_learning_epochs=5,
-        num_mini_batches=2,
+        num_mini_batches=4,
         learning_rate=1.0e-5,
         schedule="adaptive",
         gamma=0.99,
@@ -63,7 +68,7 @@ class TocabiFlatPPORunnerCfg(TocabiRoughPPORunnerCfg):
         super().__post_init__()
 
         self.max_iterations = 5000
-        self.experiment_name = "tocabi_flat"
+        self.experiment_name = "tocabi_flat_icra"
         self.policy.actor_hidden_dims = [512, 256, 128]
         self.policy.critic_hidden_dims = [512, 256, 128]
 
@@ -77,8 +82,6 @@ class TocabiMimicPPORunnerCfg(TocabiRoughPPORunnerCfg):
         self.policy.actor_hidden_dims = [512, 512]
         self.policy.critic_hidden_dims = [512, 512]
 
-
-from isaaclab_rl.rsl_rl import RslRlAMPAlgorithmCfg, RslRlAMPConfig, RslRlDiscriminatorCfg
 
 @configclass
 class TocabiAMPPPORunnerCfg(TocabiRoughPPORunnerCfg):
@@ -124,4 +127,32 @@ class TocabiAMPPPORunnerCfg(TocabiRoughPPORunnerCfg):
         self.max_iterations = 5000
         self.experiment_name = "tocabi_amp"
 
+@configclass
+class TocabiDistillationStudentTeacherCfg(RslRlOnPolicyRunnerCfg):
+    num_steps_per_env = 64
+    max_iterations = 5000
+    save_interval = 500
+    experiment_name = "tocabi_t2s"
+    empirical_normalization = True
+    policy = RslRlDistillationStudentTeacherCfg(
+        init_noise_std=1.0,
+        student_hidden_dims=[512, 256, 128],
+        teacher_hidden_dims=[512, 256, 128],
+        activation="elu",
+    )
+    algorithm = RslRlDistillationAlgorithmCfg(
+        num_learning_epochs=5,
+        learning_rate=1.0e-5,
+        gradient_length=15,
+        max_grad_norm=1.0,
+    )
 
+@configclass
+class TocabiTeacherPPORunnerCfg(TocabiRoughPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.max_iterations = 100000
+        self.experiment_name = "tocabi_t2s"
+        self.policy.actor_hidden_dims = [512, 256, 128]
+        self.policy.critic_hidden_dims = [512, 256, 128]

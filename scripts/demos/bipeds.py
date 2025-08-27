@@ -41,6 +41,7 @@ from isaaclab.sim import SimulationContext
 # Pre-defined configs
 ##
 from isaaclab_assets.robots.cassie import CASSIE_CFG  # isort:skip
+from isaaclab_assets.robots.agility import DIGIT_V4_CFG  # isort:skip
 from isaaclab_assets import H1_CFG  # isort:skip
 from isaaclab_assets import G1_CFG  # isort:skip
 from isaaclab_assets import Tocabi_CFG  # isort:skip
@@ -64,10 +65,11 @@ def design_scene(sim: sim_utils.SimulationContext) -> tuple[list, torch.Tensor]:
 
     # Robots
     cassie = Articulation(CASSIE_CFG.replace(prim_path="/World/Cassie"))
-    h1 = Articulation(H1_CFG.replace(prim_path="/World/H1"))
+    # h1 = Articulation(H1_CFG.replace(prim_path="/World/H1"))
     # g1 = Articulation(G1_CFG.replace(prim_path="/World/G1"))
     tocabi = Articulation(Tocabi_CFG.replace(prim_path="/World/Tocabi"))
-    robots = [cassie, h1, tocabi]
+    digit = Articulation(DIGIT_V4_CFG.replace(prim_path="/World/Digit"))
+    robots = [cassie, tocabi, digit]
 
     return robots, origins
 
@@ -108,21 +110,21 @@ def run_simulator(sim: sim_utils.SimulationContext, robots: list[Articulation], 
         # update buffers
         for robot in robots:
             robot.update(sim_dt)
-            if robot == robots[2]:
+            # if robot == robots[2]:
                 # print(f"Robot height: {robot.data.root_pos_w[:, 2]} m")
                 # print(f"robot default mass: {torch.sum(robot.data.default_mass)} kg")
                 # print(robot.data.root_pos_w[:, 2], robot.data.root_pos_b[:, 2])
-                print(f"root lin vel: {robot.data.root_lin_vel_w}, {robot.data.body_lin_vel_w[:, 0, :3]}")
-                for i in range(len(robot.data.body_names)):
+                # print(f"root lin vel: {robot.data.root_lin_vel_w}, {robot.data.body_lin_vel_w[:, 0, :3]}")
+                # for i in range(len(robot.data.body_names)):
                     # print(robot.data.body_names[i])
-                    if "R_AnkleRoll_Link" in robot.data.body_names[i]:
-                        print("body link pos world ", robot.data.body_link_pos_w[:, i, :3].shape)
-                        print("root pos base ", robot.data.root_pos_w[:, :3].shape)
-                        import isaaclab.utils.math as math_utils
-                        body_link_pos_b = math_utils.quat_apply_inverse(robot.data.root_quat_w, robot.data.body_link_pos_w[:, i, :3]- robot.data.root_pos_w[:, :3])
-                        print("body link pos base ", body_link_pos_b)
+                    # if "R_AnkleRoll_Link" in robot.data.body_names[i]:
+                        # print("body link pos world ", robot.data.body_link_pos_w[:, i, :3].shape)
+                        # print("root pos base ", robot.data.root_pos_w[:, :3].shape)
+                        # import isaaclab.utils.math as math_utils
+                        # body_link_pos_b = math_utils.quat_apply_inverse(robot.data.root_quat_w, robot.data.body_link_pos_w[:, i, :3]- robot.data.root_pos_w[:, :3])
+                        # print("body link pos base ", body_link_pos_b)
 
-                print("--------------------------------")
+                # print("--------------------------------")
                 # for i in range(len(robot.data.joint_names)):
                     # print(f"{robot.data.joint_names[i]}")
                 # print("--------------------------------")
