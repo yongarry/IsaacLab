@@ -138,10 +138,10 @@ class TocabiAction(ActionTerm):
         joint_ids_ordered = self._joint_ids + self._upper_joint_ids
         if self.cfg.pd_control:
             target_pos = torch.cat([self.processed_actions, self._default_upper_joint_pos], dim=1)
-            target_effort = self._p_gains / 9.0 * (target_pos - self._asset.data.joint_pos[:, joint_ids_ordered]) + self._d_gains / 3.0 * (- self._asset.data.joint_vel[:, joint_ids_ordered])
-            # lower_body_torque = self._p_gains[:12] / 9.0 * (target_pos[:,:12] - self._asset.data.joint_pos[:, self._joint_ids]) + self._d_gains[:12] / 3.0 * (- self._asset.data.joint_vel[:, self._joint_ids])
-            # upper_body_torque = self._p_gains[12:] / * (target_pos[:,12:] - self._asset.data.joint_pos[:, self._upper_joint_ids]) + self._d_gains[12:] * (- self._asset.data.joint_vel[:, self._upper_joint_ids])
-            # target_effort = torch.cat([lower_body_torque, upper_body_torque], dim=1)
+            # target_effort = self._p_gains / 9.0 * (target_pos - self._asset.data.joint_pos[:, joint_ids_ordered]) + self._d_gains / 3.0 * (- self._asset.data.joint_vel[:, joint_ids_ordered])
+            lower_body_torque = self._p_gains[:12] / 9.0 * (target_pos[:,:12] - self._asset.data.joint_pos[:, self._joint_ids]) + self._d_gains[:12] / 3.0 * (- self._asset.data.joint_vel[:, self._joint_ids])
+            upper_body_torque = self._p_gains[12:] * (target_pos[:,12:] - self._asset.data.joint_pos[:, self._upper_joint_ids]) + self._d_gains[12:] * (- self._asset.data.joint_vel[:, self._upper_joint_ids])
+            target_effort = torch.cat([lower_body_torque, upper_body_torque], dim=1)
         else:
             # 0.8 ~ 1.2
             rand_motor_scale = math_utils.sample_uniform(self._rand_motor_scale_range[0], self._rand_motor_scale_range[1], self.processed_actions.shape, device=self.device)
