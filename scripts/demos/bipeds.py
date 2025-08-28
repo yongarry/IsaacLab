@@ -64,12 +64,12 @@ def design_scene(sim: sim_utils.SimulationContext) -> tuple[list, torch.Tensor]:
     ]).to(device=sim.device)
 
     # Robots
-    cassie = Articulation(CASSIE_CFG.replace(prim_path="/World/Cassie"))
+    # cassie = Articulation(CASSIE_CFG.replace(prim_path="/World/Cassie"))
     # h1 = Articulation(H1_CFG.replace(prim_path="/World/H1"))
-    # g1 = Articulation(G1_CFG.replace(prim_path="/World/G1"))
+    g1 = Articulation(G1_CFG.replace(prim_path="/World/G1"))
     tocabi = Articulation(Tocabi_CFG.replace(prim_path="/World/Tocabi"))
     digit = Articulation(DIGIT_V4_CFG.replace(prim_path="/World/Digit"))
-    robots = [cassie, tocabi, digit]
+    robots = [tocabi, digit, g1]
 
     return robots, origins
 

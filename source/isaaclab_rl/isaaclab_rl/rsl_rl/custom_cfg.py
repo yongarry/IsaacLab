@@ -13,6 +13,8 @@ class RslRlLcpCfg:
     """Configuration for the LCP module."""
     gradient_penalty_coef: float = 0.0
     """The coefficient for the gradient penalty loss."""
+    is_lcp: bool = True
+    """Whether to use the LCP module."""
 
     gradient_penalty_coef_schedule: list[float] = MISSING
     """The schedule for the gradient penalty coefficient."""

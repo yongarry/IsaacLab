@@ -50,6 +50,13 @@ class RslRlPpoActorCriticSpectralNormCfg(RslRlPpoActorCriticCfg):
     """The policy class name. Default is ActorCritic_SN."""
     
     lipschitz_constant: float = MISSING
+    """The Lipschitz constant for the actor networks."""
+
+    schedule: Literal["learn", "fixed"] = MISSING
+    """The schedule for the Lipschitz constant. Either "learn" or "fixed"."""
+
+    lipschitz_coefficient: float = 1.0
+    """The coefficient for the Lipschitz constant."""
 
 @configclass
 class RslRlPpoActorCriticRecurrentCfg(RslRlPpoActorCriticCfg):

@@ -251,6 +251,16 @@ def orientation_tracking(env, omega: float, asset_cfg: SceneEntityCfg = SceneEnt
     roll, pitch, yaw = math_utils.euler_xyz_from_quat(asset.data.root_quat_w)
     return torch.exp(-omega*(torch.square(roll) + torch.square(pitch)))
 
+def feet_flat(env, omega: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    """ maintain base orientation(alpha, beta) flat in base frame using exponential kernel."""
+    # extract the used quantities (to enable type-hinting)
+    asset = env.scene[asset_cfg.name]
+    reward = torch.zeros(env.num_envs, device=env.device)
+    for ids in asset_cfg.body_ids:
+        roll, pitch, yaw = math_utils.euler_xyz_from_quat(asset.data.body_quat_w[:, ids, :].squeeze(1))
+        reward += torch.exp(-omega*(torch.square(roll) + torch.square(pitch)))
+    return reward
+
 def base_height_tracking(env, height: float, omega: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """ maintain base height(z) flat in base frame using exponential kernel."""
     # extract the used quantities (to enable type-hinting)

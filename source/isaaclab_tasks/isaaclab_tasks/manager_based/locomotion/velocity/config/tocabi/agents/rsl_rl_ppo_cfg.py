@@ -34,6 +34,9 @@ class TocabiRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         # rnn_num_layers=1,
     # policy = RslRlPpoActorCriticSpectralNormCfg(
         # lipschitz_constant=0.2,
+        # schedule="fixed",
+        # schedule="learn",
+        # lipschitz_coefficient=1.0,
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=1.0,
         actor_hidden_dims=[512, 256, 128],
@@ -46,7 +49,7 @@ class TocabiRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         clip_param=0.2,
         entropy_coef=0.001,
         num_learning_epochs=5,
-        num_mini_batches=4,
+        num_mini_batches=2,
         learning_rate=1.0e-5,
         schedule="adaptive",
         gamma=0.99,
@@ -55,6 +58,8 @@ class TocabiRoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         max_grad_norm=1.0,
         lcp_cfg=RslRlLcpCfg(
             gradient_penalty_coef=0.002,
+            # is_lcp=False,
+            is_lcp=True,
         ),
         bound_loss_cfg=RslRlBoundLossCfg(
             bound_loss_coef=10,

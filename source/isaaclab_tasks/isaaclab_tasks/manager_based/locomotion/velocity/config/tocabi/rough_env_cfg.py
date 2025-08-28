@@ -79,7 +79,7 @@ class CommandsCfg:
         debug_vis=True,
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
             # lin_vel_x=(-0., 0.), lin_vel_y=(-0., 0.), ang_vel_z=(-0., 0.)
-            lin_vel_x=(-0.8, 0.8), lin_vel_y=(-0.4, 0.4), ang_vel_z=(-0.8, 0.8)
+            lin_vel_x=(-0.4, 0.8), lin_vel_y=(-0.4, 0.4), ang_vel_z=(-0.5, 0.5)
         ),
     )
     phase_time = mdp.WalkingPhaseCommandCfg(
@@ -185,7 +185,7 @@ class Tocabi_WordlModelRewards:
     lin_vel_xy_tracking = RewTerm(func=mdp.track_lin_vel_xy_base_frame_exp, weight=1.0, params={"command_name": "base_velocity", "omega": 5.0})
     ang_vel_z_tracking = RewTerm(func=mdp.track_ang_vel_z_world_exp_tocabi, weight=1.0, params={"command_name": "base_velocity", "omega": 7.0})
     orientation_tracking = RewTerm(func=mdp.orientation_tracking, weight=1.0, params={"omega": 5.0})
-    base_height_tracking = RewTerm(func=mdp.base_height_tracking, weight=0.5, params={"height": 0.92, "omega": 10.0})
+    base_height_tracking = RewTerm(func=mdp.base_height_tracking, weight=0.5, params={"height": 0.928, "omega": 10.0})
     # ----------------------------------------------------------------------------------------------------------------------------------------------
     periodic_force = RewTerm(func=mdp.periodic_force, weight=1.0, params={
                         # "scale": 500, 
@@ -196,14 +196,14 @@ class Tocabi_WordlModelRewards:
     })
     # ----------------------------------------------------------------------------------------------------------------------------------------------
     feet_height_tracking = RewTerm(func=mdp.feet_height_tracking, weight=1.0, params={
-                        "omega": 5.0, "foot_height": 0.2, "kappa": 2.0, "offset": 0.1585,
+                        "omega": 5.0, "foot_height": 0.1, "kappa": 2.0, "offset": 0.1585,
                         # "omega": 5.0, "foot_height": 0.2, "kappa": 2.0, "offset": -0.77,
                         "command_name": "phase_time",
                         "asset_cfg": SceneEntityCfg("robot", body_names=["L_AnkleRoll_Link", "R_AnkleRoll_Link"]),
                         "left_foot": "L_AnkleRoll_Link", "right_foot": "R_AnkleRoll_Link"})
     feet_velocity_z_tracking = RewTerm(func=mdp.feet_velocity_z_tracking, weight=0.5, params={
                         # "omega": 5.0, "foot_height": 0.1, "kappa": 4.0, "offset": 0.1585,
-                        "omega": 3.0, "foot_height": 0.2, "kappa": 2.0,
+                        "omega": 3.0, "foot_height": 0.1, "kappa": 2.0,
                         "command_name": "phase_time",
                         "asset_cfg": SceneEntityCfg("robot", body_names=["L_AnkleRoll_Link", "R_AnkleRoll_Link"]),
                         "left_foot": "L_AnkleRoll_Link", "right_foot": "R_AnkleRoll_Link"})
@@ -217,9 +217,8 @@ class Tocabi_WordlModelRewards:
                                          "R_HipYaw_Joint", "R_HipRoll_Joint", "R_HipPitch_Joint", "R_Knee_Joint", "R_AnklePitch_Joint", "R_AnkleRoll_Joint"])})
     # ----------------------------------------------------------------------------------------------------------------------------------------------
     # joint_deviation_hip = RewTerm(func=mdp.joint_deviation_l1, weight=-0.05, params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*_HipRoll_Joint"])})
-    joint_deviation_ankle = RewTerm(func=mdp.joint_deviation_l1, weight=-0.1, params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*_AnkleRoll_Joint"])})
-    feet_flat = RewTerm(func=mdp.flat_orientation_l2, weight=-0.1, params={"asset_cfg": SceneEntityCfg("robot", body_names=["L_AnkleRoll_Link", "R_AnkleRoll_Link"])})
-
+    # joint_deviation_ankle = RewTerm(func=mdp.joint_deviation_l1, weight=-0.1, params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*_AnkleRoll_Joint"])})
+    feet_flat = RewTerm(func=mdp.feet_flat, weight=0.1, params={"omega": 5.0, "asset_cfg": SceneEntityCfg("robot", body_names=["L_AnkleRoll_Link", "R_AnkleRoll_Link"])})
     
 @configclass
 class TocabiTerminations:
@@ -248,12 +247,12 @@ class TocabiEventCfg:
             "num_buckets": 64,
         },
     )
-    # randomize_rigid_body_com = EventTerm( func=mdp.randomize_rigid_body_com, mode="startup",
-    #     params={
-    #         "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-    #         "com_range": {"x": (-0.05, 0.05), "y": (-0.05, 0.05), "z": (-0.05, 0.05)},
-    #     },
-    # )
+    randomize_rigid_body_com = EventTerm( func=mdp.randomize_rigid_body_com, mode="startup",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
+            "com_range": {"x": (-0.05, 0.05), "y": (-0.05, 0.05), "z": (-0.05, 0.05)},
+        },
+    )
     randomize_rigid_body_mass = EventTerm( func=mdp.randomize_rigid_body_mass, mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),

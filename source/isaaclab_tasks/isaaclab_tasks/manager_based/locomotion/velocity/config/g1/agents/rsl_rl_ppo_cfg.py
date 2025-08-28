@@ -5,7 +5,7 @@
 
 from isaaclab.utils import configclass
 
-from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, RslRlPpoAlgorithmCfg
+from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, RslRlPpoAlgorithmCfg, RslRlLcpCfg
 
 
 @configclass
@@ -15,6 +15,11 @@ class G1RoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     save_interval = 50
     experiment_name = "g1_rough"
     empirical_normalization = False
+    # policy = RslRlPpoActorCriticSpectralNormCfg(
+        # lipschitz_constant=0.2,
+        # schedule="fixed",
+        # schedule="learn",
+        # lipschitz_coefficient=1.0,
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=1.0,
         actor_hidden_dims=[512, 256, 128],
@@ -34,6 +39,11 @@ class G1RoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         lam=0.95,
         desired_kl=0.01,
         max_grad_norm=1.0,
+        lcp_cfg=RslRlLcpCfg(
+            gradient_penalty_coef=0.002,
+            is_lcp=True,
+            # is_lcp=False,
+        ),
     )
 
 
