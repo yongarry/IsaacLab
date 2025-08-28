@@ -59,12 +59,13 @@ def joint_vel_ordered_rel(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg = Scen
     joint_ids_reordered = [asset.data.joint_names.index(joint_name) for joint_name in asset_cfg.joint_names]
     return asset.data.joint_vel[:, joint_ids_reordered] - asset.data.default_joint_vel[:, joint_ids_reordered]
 
-def clock_input(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
+def clock_input(env: ManagerBasedRLEnv, command_name: str, is_rfoot_first: str) -> torch.Tensor:
     """The input phase of the environment.
     
     The input phase is a clock input tensor that has cycle.
     """
     step_time = env.command_manager.get_command(command_name)
+    is_rfoot = env.command_manager.get_command(is_rfoot_first)
     clock_input_sin = torch.sin(2 * math.pi * env.episode_length_buf.unsqueeze(1) * env.step_dt / step_time)
     # clock_input_cos = torch.cos(2 * math.pi * env.episode_length_buf.unsqueeze(1) * env.step_dt / step_time)
     # return torch.cat([clock_input_sin, clock_input_cos], dim=1)
@@ -72,9 +73,8 @@ def clock_input(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
     rfoot_first_obs = torch.cat([clock_input_sin, -clock_input_sin], dim=1)
     lfoot_first_obs = torch.cat([-clock_input_sin, clock_input_sin], dim=1)
 
-    # clock = torch.where(is_rfoot, rfoot_first_obs, lfoot_first_obs)
-    # return clock
-    return rfoot_first_obs
+    clock = torch.where(is_rfoot, rfoot_first_obs, lfoot_first_obs)
+    return clock
 
 def last_processed_action(env: ManagerBasedEnv, action_name: str | None = None) -> torch.Tensor:
     """The last input action to the environment.

@@ -148,8 +148,6 @@ class TocabiAction(ActionTerm):
             lower_body_torque = self.processed_actions * self._torque_limits[:12] * rand_motor_scale
             upper_body_torque = self._p_gains[12:] / 9.0 * (self._default_upper_joint_pos - self._asset.data.joint_pos[:, self._upper_joint_ids]) \
                               + self._d_gains[12:] / 3.0 * (- self._asset.data.joint_vel[:, self._upper_joint_ids])
-            # upper_body_torque = self._p_gains[12:] * (self._default_upper_joint_pos - self._asset.data.joint_pos[:, self._upper_joint_ids]) \
-            #                   + self._d_gains[12:] * (- self._asset.data.joint_vel[:, self._upper_joint_ids])
             lower_rand_torque_inj = math_utils.sample_uniform(self._rand_torque_inj_range[0], self._rand_torque_inj_range[1], lower_body_torque.shape, device=self.device)
             target_effort = torch.cat([lower_body_torque + lower_rand_torque_inj, upper_body_torque], dim=1)
 

@@ -251,14 +251,16 @@ def orientation_tracking(env, omega: float, asset_cfg: SceneEntityCfg = SceneEnt
     roll, pitch, yaw = math_utils.euler_xyz_from_quat(asset.data.root_quat_w)
     return torch.exp(-omega*(torch.square(roll) + torch.square(pitch)))
 
-def feet_flat(env, omega: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
-    """ maintain base orientation(alpha, beta) flat in base frame using exponential kernel."""
+def feet_flat(env, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    """ give penalty if the projected gravity vector is not flat"""
     # extract the used quantities (to enable type-hinting)
     asset = env.scene[asset_cfg.name]
     reward = torch.zeros(env.num_envs, device=env.device)
     for ids in asset_cfg.body_ids:
-        roll, pitch, yaw = math_utils.euler_xyz_from_quat(asset.data.body_quat_w[:, ids, :].squeeze(1))
-        reward += torch.exp(-omega*(torch.square(roll) + torch.square(pitch)))
+        link_quat_w = asset.data.body_link_quat_w[:, ids, :].squeeze(1)
+        gravity = torch.tensor([0.0, 0.0, -1.0], device=env.device).repeat(env.num_envs, 1)
+        projected_gravity = math_utils.quat_apply_inverse(link_quat_w, gravity)
+        reward += torch.sum(torch.square(projected_gravity[:, :2]), dim=1)
     return reward
 
 def base_height_tracking(env, height: float, omega: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
@@ -266,7 +268,6 @@ def base_height_tracking(env, height: float, omega: float, asset_cfg: SceneEntit
     # extract the used quantities (to enable type-hinting)
     asset = env.scene[asset_cfg.name]
     return torch.exp(-omega*torch.square(asset.data.root_pos_w[:, 2] - height))
-    # return torch.exp(-omega*torch.square(torch.clip(asset.data.root_pos_w[:, 2] - height, -torch.inf, 0.0)))
 
 def periodic_force(
         env, 
@@ -274,20 +275,19 @@ def periodic_force(
         command_name: str, 
         left_foot: str, 
         right_foot: str, 
+        is_rfoot_first: str,
         sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """Reward periodic force on the robot's feet. reasonable foot forces during the stance phase of locomotion."""
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
     phase_time = env.command_manager.get_command(command_name)
+    is_rfoot = env.command_manager.get_command(is_rfoot_first)
 
     cycle_time = env.episode_length_buf.unsqueeze(1) * env.step_dt % phase_time
     second_foot_indicator = torch.where(cycle_time < phase_time/2, 1.0, 0.0) # left foot
-    # second_foot_indicator = torch.where(cycle_time >= phase_time/2, 1.0, 0.0) # left foot same as right foot
     first_foot_indicator = torch.where(cycle_time >= phase_time/2, 1.0, 0.0) # right foot
 
-    # left_foot_indicator = torch.where(~is_rfoot, first_foot_indicator, second_foot_indicator)
-    # right_foot_indicator = torch.where(is_rfoot, first_foot_indicator, second_foot_indicator)
-    left_foot_indicator = second_foot_indicator
-    right_foot_indicator = first_foot_indicator
+    left_foot_indicator = torch.where(~is_rfoot, first_foot_indicator, second_foot_indicator)
+    right_foot_indicator = torch.where(is_rfoot, first_foot_indicator, second_foot_indicator)
 
     left_foot_idx = [sensor_cfg.body_ids[i] for i in range(len(sensor_cfg.body_ids)) if left_foot in sensor_cfg.body_names[i]]
     right_foot_idx = [sensor_cfg.body_ids[i] for i in range(len(sensor_cfg.body_ids)) if right_foot in sensor_cfg.body_names[i]]
@@ -302,21 +302,21 @@ def periodic_velocity(
         env, 
         scale: float, 
         command_name: str, 
+        is_rfoot_first: str,
         left_foot: str, 
         right_foot: str, 
         asset_cfg: SceneEntityCfg) -> torch.Tensor:
     """Reward periodic velocity on the robot's feet. reasonable foot velocity during the stance phase of locomotion."""
     asset = env.scene[asset_cfg.name]
     phase_time = env.command_manager.get_command(command_name)
+    is_rfoot = env.command_manager.get_command(is_rfoot_first)
 
     cycle_time = env.episode_length_buf.unsqueeze(1) * env.step_dt % phase_time
     second_foot_indicator = torch.where(cycle_time < phase_time/2, 1.0, 0.0) # left foot
     first_foot_indicator = torch.where(cycle_time >= phase_time/2, 1.0, 0.0) # right foot
 
-    # left_foot_indicator = torch.where(~is_rfoot, first_foot_indicator, second_foot_indicator)
-    # right_foot_indicator = torch.where(is_rfoot, first_foot_indicator, second_foot_indicator)
-    left_foot_indicator = second_foot_indicator
-    right_foot_indicator = first_foot_indicator
+    left_foot_indicator = torch.where(~is_rfoot, first_foot_indicator, second_foot_indicator)
+    right_foot_indicator = torch.where(is_rfoot, first_foot_indicator, second_foot_indicator)
 
     left_foot_idx = [asset_cfg.body_ids[i] for i in range(len(asset_cfg.body_ids)) if left_foot in asset_cfg.body_names[i]]
     right_foot_idx = [asset_cfg.body_ids[i] for i in range(len(asset_cfg.body_ids)) if right_foot in asset_cfg.body_names[i]]
@@ -335,41 +335,38 @@ def feet_height_tracking(
         kappa: float, 
         offset: float, 
         command_name: str, 
+        is_rfoot_first: str,
         left_foot: str, 
         right_foot: str, 
         asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Reward tracking of feet height trajectory. generated by Von Mises distribution."""
     asset = env.scene[asset_cfg.name]
     phase_time = env.command_manager.get_command(command_name)
+    is_rfoot = env.command_manager.get_command(is_rfoot_first)
 
     B = torch.exp(-torch.tensor(kappa))
     norm = torch.exp(torch.tensor(kappa))-torch.exp(-torch.tensor(kappa))
     theta1 = 2 * math.pi * (env.episode_length_buf.unsqueeze(1) * env.step_dt % phase_time) / phase_time - math.pi/2 #right foot
-    # theta1 = 2 * math.pi * (env.episode_length_buf.unsqueeze(1) * env.step_dt - phase_time/2) % phase_time / phase_time - math.pi/2 #left foot
     theta2 = 2 * math.pi * (env.episode_length_buf.unsqueeze(1) * env.step_dt - phase_time/2) % phase_time / phase_time - math.pi/2 #left foot
     gx1 = torch.exp(torch.tensor(kappa) * torch.cos(theta1))
     gx2 = torch.exp(torch.tensor(kappa) * torch.cos(theta2))
     first_foot_traj = foot_height * (gx1-B) / norm + offset
     second_foot_traj = foot_height * (gx2-B) / norm + offset
 
-    # left_foot_traj = torch.where(~is_rfoot, first_foot_traj, second_foot_traj)
-    # right_foot_traj = torch.where(is_rfoot, first_foot_traj, second_foot_traj)
-    left_foot_traj = second_foot_traj
-    right_foot_traj = first_foot_traj
-
+    left_foot_traj = torch.where(~is_rfoot, first_foot_traj, second_foot_traj)
+    right_foot_traj = torch.where(is_rfoot, first_foot_traj, second_foot_traj)
 
     left_foot_idx = [asset_cfg.body_ids[i] for i in range(len(asset_cfg.body_ids)) if left_foot in asset_cfg.body_names[i]]
     right_foot_idx = [asset_cfg.body_ids[i] for i in range(len(asset_cfg.body_ids)) if right_foot in asset_cfg.body_names[i]]
 
-    ## tracking based on world frame
-    left_foot_pos_z = asset.data.body_pos_w[:, left_foot_idx, 2] - left_foot_traj
-    right_foot_pos_z = asset.data.body_pos_w[:, right_foot_idx, 2] - right_foot_traj
+    # change to tracking based on base frame 
+    l_foot_pos_b = math_utils.quat_apply_inverse(asset.data.root_quat_w, asset.data.body_pos_w[:, left_foot_idx[0], :3] - asset.data.root_pos_w[:, :3])
+    r_foot_pos_b = math_utils.quat_apply_inverse(asset.data.root_quat_w, asset.data.body_pos_w[:, right_foot_idx[0], :3] - asset.data.root_pos_w[:, :3])
 
-    ## tracking based on base frame
-    # l_foot_pos_b = math_utils.quat_apply_inverse(asset.data.root_quat_w, asset.data.body_pos_w[:, left_foot_idx[0], :3] - asset.data.root_pos_w[:, :3])
-    # r_foot_pos_b = math_utils.quat_apply_inverse(asset.data.root_quat_w, asset.data.body_pos_w[:, right_foot_idx[0], :3] - asset.data.root_pos_w[:, :3])
-    # left_foot_pos_z = l_foot_pos_b[:, 2].unsqueeze(1) - left_foot_traj
-    # right_foot_pos_z = r_foot_pos_b[:, 2].unsqueeze(1) - right_foot_traj
+    # left_foot_pos_z = asset.data.body_pos_w[:, left_foot_idx, 2] - left_foot_traj
+    # right_foot_pos_z = asset.data.body_pos_w[:, right_foot_idx, 2] - right_foot_traj
+    left_foot_pos_z = l_foot_pos_b[:, 2].unsqueeze(1) - left_foot_traj
+    right_foot_pos_z = r_foot_pos_b[:, 2].unsqueeze(1) - right_foot_traj
     foot_tracking_error = torch.sum(torch.square(left_foot_pos_z) + torch.square(right_foot_pos_z), dim=1).squeeze()
     return torch.exp(-omega*foot_tracking_error)
 
@@ -379,17 +376,18 @@ def feet_velocity_z_tracking(
         foot_height: float, 
         kappa: float, 
         command_name: str, 
+        is_rfoot_first: str,
         left_foot: str, 
         right_foot: str, 
         asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Reward tracking of feet velocity trajectory. generated by differentiated Von Mises distribution."""
     asset = env.scene[asset_cfg.name]
     phase_time = env.command_manager.get_command(command_name)
+    is_rfoot = env.command_manager.get_command(is_rfoot_first)
 
     B = torch.exp(-torch.tensor(kappa))
     norm = torch.exp(torch.tensor(kappa))-torch.exp(-torch.tensor(kappa))
     theta_right = 2 * math.pi * (env.episode_length_buf.unsqueeze(1) * env.step_dt % phase_time) / phase_time - math.pi/2
-    # theta_right = 2 * math.pi * (env.episode_length_buf.unsqueeze(1) * env.step_dt - phase_time/2) % phase_time / phase_time - math.pi/2
     theta_left = 2 * math.pi * (env.episode_length_buf.unsqueeze(1) * env.step_dt - phase_time/2) % phase_time / phase_time - math.pi/2
     gx_right = torch.exp(torch.tensor(kappa) * torch.cos(theta_right))
     gx_left = torch.exp(torch.tensor(kappa) * torch.cos(theta_left))
@@ -400,16 +398,17 @@ def feet_velocity_z_tracking(
     foot_traj_first = foot_height * (d_gx_right) / norm #right foot
     foot_traj_second = foot_height * (d_gx_left) / norm #left foot
 
-    # foot_traj_left = torch.where(~is_rfoot, foot_traj_first, foot_traj_second)
-    # foot_traj_right = torch.where(is_rfoot, foot_traj_first, foot_traj_second)
-    foot_traj_left = foot_traj_second
-    foot_traj_right = foot_traj_first
+    foot_traj_left = torch.where(~is_rfoot, foot_traj_first, foot_traj_second)
+    foot_traj_right = torch.where(is_rfoot, foot_traj_first, foot_traj_second)
 
     left_foot_idx = [asset_cfg.body_ids[i] for i in range(len(asset_cfg.body_ids)) if left_foot in asset_cfg.body_names[i]]
     right_foot_idx = [asset_cfg.body_ids[i] for i in range(len(asset_cfg.body_ids)) if right_foot in asset_cfg.body_names[i]]
 
     left_foot_vel_z_error = asset.data.body_lin_vel_w[:, left_foot_idx, 2] - foot_traj_left
     right_foot_vel_z_error = asset.data.body_lin_vel_w[:, right_foot_idx, 2] - foot_traj_right
+
+    # left_foot_vel_y_error = asset.data.body_lin_vel_w[:, left_foot_idx, 1]
+    # right_foot_vel_y_error = asset.data.body_lin_vel_w[:, right_foot_idx, 1]
 
     foot_vel_tracking_error = torch.sum(torch.square(left_foot_vel_z_error) + torch.square(right_foot_vel_z_error), dim=1).squeeze()
     return torch.exp(-omega*foot_vel_tracking_error)

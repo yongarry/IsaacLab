@@ -24,6 +24,15 @@ class TocabiActionCfg(ActionTermCfg):
     scale: float | dict[str, float] = 1.0
     """Scale factor for the action (float or dict of regex expressions). Defaults to 1.0."""
 
+    rescale_to_limits: bool = True
+    """Whether to rescale the action to the joint limits. Defaults to True.
+
+    If True, the input actions are rescaled to the joint limits, i.e., the action value in
+    the range [-1, 1] corresponds to the joint lower and upper limits respectively.
+
+    Note:
+        This operation is performed after applying the scale factor.
+    """
 
     pd_control: bool = True
     """Whether to use PD control. Defaults to True."""
@@ -61,7 +70,7 @@ class TocabiJointPositionActionCfg(ActionTermCfg):
     If True, this flag results in overwriting the values of :attr:`offset` to the default joint positions
     from the articulation asset.
     """
-    joint_names: list[str] = [".*"]
+    joint_names: list[str] = MISSING
     """List of joint names or regex expressions that the action will be mapped to."""
 
     lower_joint_names: list[str] = MISSING
