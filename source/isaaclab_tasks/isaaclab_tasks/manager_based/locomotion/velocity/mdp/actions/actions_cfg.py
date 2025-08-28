@@ -61,7 +61,7 @@ class TocabiJointPositionActionCfg(ActionTermCfg):
     If True, this flag results in overwriting the values of :attr:`offset` to the default joint positions
     from the articulation asset.
     """
-    joint_names: list[str] = MISSING
+    joint_names: list[str] = [".*"]
     """List of joint names or regex expressions that the action will be mapped to."""
 
     lower_joint_names: list[str] = MISSING
