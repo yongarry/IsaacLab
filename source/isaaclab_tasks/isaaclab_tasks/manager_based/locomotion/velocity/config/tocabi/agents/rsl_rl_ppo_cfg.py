@@ -78,6 +78,55 @@ class TocabiFlatPPORunnerCfg(TocabiRoughPPORunnerCfg):
         self.policy.critic_hidden_dims = [512, 256, 128]
 
 @configclass
+class TocabiFlatPPORunnerCfgSNfix(TocabiFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.max_iterations = 5000
+        self.experiment_name = "tocabi_flat_icra"
+
+        self.policy = RslRlPpoActorCriticSpectralNormCfg(
+            lipschitz_constant=0.2,
+            schedule="fixed",
+            lipschitz_coefficient=1.0,
+            init_noise_std=0.2,
+            noise_std_type="fixed",
+            actor_hidden_dims=[512, 256, 128],
+            critic_hidden_dims=[512, 256, 128],
+            activation="elu",
+        )
+        self.algorithm.lcp_cfg.is_lcp = False
+
+@configclass
+class TocabiFlatPPORunnerCfgSNlearn(TocabiFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.max_iterations = 5000
+        self.experiment_name = "tocabi_flat_icra"
+
+        self.policy = RslRlPpoActorCriticSpectralNormCfg(
+            lipschitz_constant=1.0,
+            schedule="learn",
+            lipschitz_coefficient=1.5,
+            init_noise_std=1.0,
+            actor_hidden_dims=[512, 256, 128],
+            critic_hidden_dims=[512, 256, 128],
+            activation="elu",
+        )
+        self.algorithm.lcp_cfg.is_lcp = False
+
+@configclass
+class TocabiFlatPPORunnerCfgLCP(TocabiFlatPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.max_iterations = 5000
+        self.experiment_name = "tocabi_flat_icra"
+        self.policy.actor_hidden_dims = [512, 256, 128]
+        self.policy.critic_hidden_dims = [512, 256, 128]
+
+@configclass
 class TocabiMimicPPORunnerCfg(TocabiRoughPPORunnerCfg):
     def __post_init__(self):
         super().__post_init__()

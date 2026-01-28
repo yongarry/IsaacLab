@@ -8,6 +8,9 @@ from isaaclab.managers import RewardTermCfg as RewTerm
 from .rough_env_cfg import TocabiRoughEnvCfg, TocabiRewards
 import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 from isaaclab.managers import SceneEntityCfg
+import isaaclab.sim as sim_utils
+from isaaclab.managers import EventTermCfg as EventTerm
+from isaaclab.assets import RigidObjectCfg
 
 @configclass
 class TocabiFlatEnvCfg(TocabiRoughEnvCfg):
@@ -86,6 +89,7 @@ class TocabiMimicEnvCfg(TocabiFlatEnvCfg):
         self.rewards.feet_slide = None
         self.rewards.feet_contact_force = None
 
+@configclass
 class TocabiMimicEnvCfg_PLAY(TocabiMimicEnvCfg):
     def __post_init__(self):
         # post init of parent
@@ -98,3 +102,19 @@ class TocabiMimicEnvCfg_PLAY(TocabiMimicEnvCfg):
         self.observations.policy.enable_corruption = False
         # remove random pushing
         self.events.base_external_force_torque = None
+
+
+
+@configclass
+class TocabiFlatEnvCfg_torque(TocabiFlatEnvCfg):
+    def __post_init__(self):
+        # post init of parent
+        super().__post_init__()
+        self.actions.joint_pos.pd_control = False
+
+@configclass
+class TocabiFlatEnvCfg_pos(TocabiFlatEnvCfg):
+    def __post_init__(self):
+        # post init of parent
+        super().__post_init__()
+        self.actions.joint_pos.pd_control = True

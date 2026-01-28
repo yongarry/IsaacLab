@@ -113,3 +113,63 @@ gym.register(
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiDistillationStudentTeacherCfg",
     },
 )
+
+gym.register(
+    id="Flat-Tocabi-SNfix-pos",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:TocabiFlatEnvCfg_pos",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiFlatPPORunnerCfgSNfix",
+    },
+)
+
+gym.register(
+    id="Flat-Tocabi-SNfix-torq",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:TocabiFlatEnvCfg_torque",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiFlatPPORunnerCfgSNfix",
+    },
+)
+
+gym.register(
+    id="Flat-Tocabi-SNlearn-pos",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:TocabiFlatEnvCfg_pos",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiFlatPPORunnerCfgSNlearn",
+    },
+)
+
+gym.register(
+    id="Flat-Tocabi-SNlearn-torq",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:TocabiFlatEnvCfg_torque",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiFlatPPORunnerCfgSNlearn",
+    },
+)
+
+# gym.register(
+#     id="Flat-Tocabi-LCP-pos",
+#     entry_point="isaaclab.envs:ManagerBasedRLEnv",
+#     disable_env_checker=True,
+#     kwargs={
+#         "env_cfg_entry_point": f"{__name__}.flat_env_cfg:TocabiFlatEnvCfg_pos",
+#         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiFlatPPORunnerCfgLCP",
+#     },
+# )
+
+gym.register(
+    id="Flat-Tocabi-LCP-torq",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.flat_env_cfg:TocabiFlatEnvCfg_torque",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:TocabiFlatPPORunnerCfgLCP",
+    },
+)

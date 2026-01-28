@@ -69,7 +69,9 @@ def design_scene(sim: sim_utils.SimulationContext) -> tuple[list, torch.Tensor]:
     g1 = Articulation(G1_CFG.replace(prim_path="/World/G1"))
     tocabi = Articulation(Tocabi_CFG.replace(prim_path="/World/Tocabi"))
     digit = Articulation(DIGIT_V4_CFG.replace(prim_path="/World/Digit"))
-    robots = [tocabi, digit, g1]
+    # p73 = Articulation(P73_CFG.replace(prim_path="/World/P73"))
+
+    robots = [tocabi, g1, digit]
 
     return robots, origins
 
@@ -83,7 +85,7 @@ def run_simulator(sim: sim_utils.SimulationContext, robots: list[Articulation], 
     # Simulate physics
     while simulation_app.is_running():
         # reset
-        if count % 2000 == 0:
+        if count % 200 == 0:
             # reset counters
             sim_time = 0.0
             count = 0
@@ -110,16 +112,16 @@ def run_simulator(sim: sim_utils.SimulationContext, robots: list[Articulation], 
         # update buffers
         for robot in robots:
             robot.update(sim_dt)
-            # if robot == robots[2]:
+            if robot == robots[2]:
                 # print(f"Robot height: {robot.data.root_pos_w[:, 2]} m")
-                # print(f"robot default mass: {torch.sum(robot.data.default_mass)} kg")
+                print(f"robot default mass: {torch.sum(robot.data.default_mass)} kg")
                 # print(robot.data.root_pos_w[:, 2], robot.data.root_pos_b[:, 2])
                 # print(f"root lin vel: {robot.data.root_lin_vel_w}, {robot.data.body_lin_vel_w[:, 0, :3]}")
-                # for i in range(len(robot.data.body_names)):
+                for i in range(len(robot.data.body_names)):
                     # print(robot.data.body_names[i])
-                    # if "R_AnkleRoll_Link" in robot.data.body_names[i]:
-                        # print("body link pos world ", robot.data.body_link_pos_w[:, i, :3].shape)
-                        # print("root pos base ", robot.data.root_pos_w[:, :3].shape)
+                    if "head_v3_1" in robot.data.body_names[i]:
+                        # print("body link pos world ", robot.data.body_link_pos_w[:, i, :3])
+                        print("root pos base ", robot.data.root_pos_w[:, :3])
                         # import isaaclab.utils.math as math_utils
                         # body_link_pos_b = math_utils.quat_apply_inverse(robot.data.root_quat_w, robot.data.body_link_pos_w[:, i, :3]- robot.data.root_pos_w[:, :3])
                         # print("body link pos base ", body_link_pos_b)
@@ -127,7 +129,7 @@ def run_simulator(sim: sim_utils.SimulationContext, robots: list[Articulation], 
                 # print("--------------------------------")
                 # for i in range(len(robot.data.joint_names)):
                     # print(f"{robot.data.joint_names[i]}")
-                # print("--------------------------------")
+                print("--------------------------------")
                 
 
 def main():
@@ -136,7 +138,7 @@ def main():
     sim_cfg = sim_utils.SimulationCfg(dt=0.005, device=args_cli.device)
     sim = SimulationContext(sim_cfg)
     # Set main camera
-    sim.set_camera_view(eye=[0.0, 5.0, 2.25], target=[0.0, 0.0, 1.0])
+    sim.set_camera_view(eye=[3.0, 4.0, 2.25], target=[0.0, 0.0, 0.25])
 
     # design scene
     robots, origins = design_scene(sim)
